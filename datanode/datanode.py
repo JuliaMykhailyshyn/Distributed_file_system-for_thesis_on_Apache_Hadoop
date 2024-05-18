@@ -3,6 +3,7 @@ from flask import jsonify
 
 class DataNode():
     def __init__(self, address):
+        self.node_status = 'active' # CHANGE
         self.address = address
         self.list_of_stored_filenames = []
         self.management_node = '127.0.0.1:5010'

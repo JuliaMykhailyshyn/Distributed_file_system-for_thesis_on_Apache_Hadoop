@@ -8,7 +8,7 @@ from flask import render_template, jsonify
 control_node = ManagementNode('127.0.0.1:5010')
 
 app = Flask('management_node')
-CORS(app)  # Дозволяє CORS для всіх маршрутів
+CORS(app)  # Дозволяє CORS для всіх маршрутів.0.
 
 @app.route('/get_working_nodes', methods = ["GET"])
 def get_working_nodes():
@@ -32,7 +32,14 @@ def get_nodes_with_file():
 def update_add_file():
     json_received = json.loads(request.json)
     control_node.update_node_add_file(json_received['slave_node_name'], json_received['file_name'])
+    return 'Success'
+
+
+#@app.
+
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=5010)  # Start the Flask server
 #app.run('localhost', 5010)
+
+

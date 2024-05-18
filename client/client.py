@@ -76,14 +76,12 @@ class Client():
                                          {'file_name': name_of_block, 'my_bytes_string_file': base64_encoded_data}))
 
         file.close()
-        
-        
+
     def get_slave_nodes_list_for_the_file(self, file_directory):
         file_name = file_directory.split('/')[-1]
         response = requests.get('http://' + self.management_node + '/get_nodes_with_file',
                                 json = json.dumps({'file_name': file_name}))
         return response.json()['slave_nodes_with_needed_file']
-
 
     def retrieve_the_file(self, file_name, list_of_nodes_to_retrieve_from):
         contents_table = {}#name and bytes_file pairs
@@ -105,7 +103,7 @@ class Client():
             
         return True
                 
-            
+    #def add_node(self, node_address):
 
 
 

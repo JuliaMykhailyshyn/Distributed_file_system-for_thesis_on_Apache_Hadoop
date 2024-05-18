@@ -1,17 +1,31 @@
 from flask import jsonify
+import csv
 
 class ManagementNode():
-    def __init__(self, management_node_address: str):
+    def __init__(self, management_node_address: str):# I need to read from file(csv)
         self.management_node_address = management_node_address
-        self.control_table = {'127.0.0.1:5021':
-                    []#які файли містить в собі кожна нода
+        self.control_table = {}
+
+        with open('nodes_addresses.csv', 'r') as csv_file:
+            csv_reader = csv.reader(csv_file)
+            for line in csv_reader:
+                for node in line:
+                    if node != '':
+                        self.control_table[node] = []
+        print(self.control_table)
+        #self.control_table = {'127.0.0.1:5021':
+        #            []#які файли містить в собі кожна нода
                 #'127.0.0.1:5022':
                 #    []
+        #}
+# який сенс в тому, що клієнт може сам добавляти ноди???????? тобто це ніби ми(наша система/програма) надаємо йому сервіс
+# обробити його дані на наших нодах і це все контролювати
+# а в нього наприклад ще свої комп'ютери можуть бути? і він також хоче використовувати їх щоб обробляти свої дані?
 
-        }
         # request to working node- and it just tells us what changed and that's all
         # we need updates
-
+    def add_node(self, node_address):
+        self.control_table[node_address] = []
     def get_slave_nodes(self):
         a = list(self.control_table.keys())
         to_json = {'slave_nodes_list': a}
@@ -32,6 +46,7 @@ class ManagementNode():
 
     def update_node_add_file(self, node_name, file_name):
         self.control_table[node_name].append(file_name)
+
 
 
 
