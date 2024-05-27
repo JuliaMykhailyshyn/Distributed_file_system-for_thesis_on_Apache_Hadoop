@@ -6,9 +6,7 @@ def map_function(csv_reader):
         for word in line:
             separated_values += word.split(',')
     # separated values DONE
-
     to_return = []
-
     for single in separated_values:
         if single != '':
             key_value_pair = (single, 1)
