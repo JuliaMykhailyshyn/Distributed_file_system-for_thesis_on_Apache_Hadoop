@@ -1,8 +1,13 @@
 import json
 import os
+import time
+
 import requests
 import base64
 import ssl
+
+import aiohttp
+import asyncio
 
 # Create an SSLContext with the desired SSL version
 context = ssl.SSLContext(ssl.PROTOCOL_TLS)
@@ -48,7 +53,7 @@ class Client():
 
             name_of_block = name_of_file + "#fragment" + str(count_of_blocks)
             base64_encoded_data = base64.b64encode(my_block).decode('utf-8')
-            print(base64_encoded_data)
+            #print(base64_encoded_data)
 
             #to_send = {'file_name': name_of_block, 'my_bytes_string_file': base64_encoded_data}
             #sending_json = json.dumps(to_send)  # jsonify function is same!!!!!!!it makes a json object
@@ -92,7 +97,7 @@ class Client():
             
         
         contents_table = dict(sorted(contents_table.items(), 
-                                     key = lambda x: int(x[0][x[0].find('#fragment') +9 :])   ))#careful###YEAP###MISTAKE THERE!!!!!!!
+                                     key = lambda x: int(x[0][x[0].find('#fragment') +9 :])   ))#!!
         print("ATTENTION!!! " + str(contents_table.keys()))
         file = open("retrieved_files/" + file_name,'wb')
         for key in contents_table:
@@ -104,6 +109,59 @@ class Client():
         return True
                 
     #def add_node(self, node_address):
+
+    async def get_result(self, session, filename, mappy_encoded, reducepy_encoded, unique_job_name):
+        async with session.get('http://' + self.management_node + '/mapreduce/launch',
+                                json=json.dumps({'filename': filename, 'map_code': mappy_encoded,
+                                      'reduce_code': reducepy_encoded, 'unique_job_name': unique_job_name})) as response:
+            return await response.json()
+
+    async def check_progress(self, session, unique_job_name):
+        await asyncio.sleep(4)
+        job_running = True
+        while job_running:
+            async with session.get('http://' + self.management_node + '/inform_client_of_job_status',
+                                   json=json.dumps({'job_identifier': unique_job_name})) as response:
+                check_the_progress = await response.json()
+                if check_the_progress['process'] == "The job finished or never started":
+                    print(check_the_progress['process'])
+                    return "job finished (successfully), tracking finished"
+                print(check_the_progress['process'] + '----' + str(check_the_progress['percentage_of_nodes_completed']))
+                if check_the_progress['process'] == 'reduce' and check_the_progress['percentage_of_nodes_completed'] == 100:
+                    job_running = False
+            await asyncio.sleep(3)
+
+    async def run_tasks(self, filename, mappy_encoded, reducepy_encoded, unique_job_name):
+        async with aiohttp.ClientSession() as session:
+            # Launch mapreduce process without awaiting completion
+            launch_task = asyncio.create_task(
+                self.get_result(session, filename, mappy_encoded, reducepy_encoded, unique_job_name))
+            # Start checking progress immediately
+            progress_task = asyncio.create_task(self.check_progress(session, unique_job_name))
+
+            # Wait for both tasks to complete
+            await asyncio.gather(launch_task, progress_task)
+    def launch_mapreduce_process(self, filename, mappy, reducepy, unique_job_name):
+        '''map_bytes = open(mappy, 'rb')
+        reduce_bytes = open(reducepy, 'rb')
+        mappy_encoded = base64.b64encode(map_bytes).decode('utf-8')
+        reducepy_encoded = base64.b64encode(reduce_bytes).decode('utf-8')
+        map_bytes.close()
+        reduce_bytes.close()
+        '''
+        mappy_encoded = '111'
+        reducepy_encoded = '222'
+        #asyncronous processes TO_LEARN
+
+
+        return asyncio.run(
+            self.run_tasks(filename, mappy_encoded, reducepy_encoded, unique_job_name)
+        )
+
+
+
+
+
 
 
 

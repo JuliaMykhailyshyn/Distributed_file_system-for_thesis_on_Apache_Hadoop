@@ -1,12 +1,18 @@
 import base64
 from flask import jsonify
+import requests
 
+
+import csv
 class DataNode():
     def __init__(self, address):
         self.node_status = 'active' # CHANGE
         self.address = address
         self.list_of_stored_filenames = []
         self.management_node = '127.0.0.1:5010'
+        response = requests.post('http://' + self.management_node + '/heartbeat',
+                                 json={'node_address': self.address, 'status': self.node_status})
+        self.heart_beat = 'OFF'
     def get_address(self):
         return self.address
 
@@ -30,4 +36,19 @@ class DataNode():
                 dictionary_to_return[piece_of_file] = base64_encoded_data
         return jsonify({'dictionary_with_files': dictionary_to_return})
 
+    def inform_status(self):
+        response = requests.post('http://' + self.management_node + '/heartbeat',
+                                 json={'node_address': self.address, 'status': self.node_status})
 
+        # my map function will save all the results that it produces in one file
+        # it has to create it first then!!!!
+        def launch_map_execution(self, file_name_to_analyze, map_function_py, unique_job_name):
+            # we transported this map_function  --- we need to assemble it all back
+            self.node_status = 'map_processing'
+            with open(file_name_to_analyze) as csv_file:
+                csv_reader = csv.reader(csv_file, delimiter=',')
+
+            for file in self.list_of_stored_filenames:
+                if file_name_to_analyze in file:
+                    # NOT FINISHED CODE HERE
+                    print('to finish')
