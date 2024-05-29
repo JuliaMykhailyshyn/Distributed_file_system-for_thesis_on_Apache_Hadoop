@@ -82,8 +82,11 @@ def launch_mapreduce():
     to_thread_continuous_updating.start()
 
     # 4. get the job going!!
-    control_node.jobs_running[unique_job_name][0] = 'map'
-    time.sleep(20)# current request is on pause, but the flask app is threaded !!
+
+    control_node.map_launch(json_received['map_code'], unique_job_name)
+
+    control_node.jobs_running[unique_job_name][0] = 'shuffle'
+    time.sleep(1)
     control_node.jobs_running[unique_job_name][0] = 'shuffle'
     time.sleep(20)
     control_node.jobs_running[unique_job_name][0] = 'reduce'

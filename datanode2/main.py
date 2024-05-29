@@ -33,6 +33,20 @@ def get_file():
     json_received = json.loads(request.json)
     return datanode.assemble_file(json_received['file_name'])
 
+@app.route('/map_launch', methods = ['GET'])
+def map_launch():
+    json_received = json.loads(request.json)
+    return datanode.launch_map_execution(json_received['file_name'], json_received['map_py'], json_received['job_name'])
+
+@app.route('/shuffle_launch', methods = ['POST'])
+def shuffle_launch():
+    return
+
+@app.route('/reduce_launch', methods = ['GET'])
+def reduce_launch():
+    return
+
+
 
 @app.route('/turn_on_heartbeat_function', methods=["POST"])
 def turn_on_heartbeat_function():
@@ -50,7 +64,7 @@ def turn_on_heartbeat_function():
         while to_inform:
             response = requests.post('http://' + datanode.management_node + '/heartbeat',
                                       json=json.dumps({'node_address': datanode.address,'status': datanode.node_status}))
-            time.sleep(2)
+            time.sleep(1)
             if datanode.heart_beat != 'ON':
                 to_inform = False
 

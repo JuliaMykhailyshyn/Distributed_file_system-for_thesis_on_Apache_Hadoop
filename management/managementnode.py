@@ -47,7 +47,7 @@ class ManagementNode():
 
         for key in self.control_table:
             for j in self.control_table[key]:
-                if file_name in j and key not in to_return_slave_nodes_list:#лишнє
+                if file_name.replace('.csv', '') in j and key not in to_return_slave_nodes_list:
                     to_return_slave_nodes_list.append(key)
                     break
         print(to_return_slave_nodes_list)
@@ -75,7 +75,7 @@ class ManagementNode():
 
     def map_launch(self, mappy, job_name):# + file_name
         self.jobs_running[job_name][0] = 'map'
-        file_name = self.jobs_running[unique_job_name][2]
+        file_name = self.jobs_running[job_name][2]
         slave_nodes_working_on_given_file = requests.get(
             'http://' + self.management_node_address + '/get_nodes_with_file',
             json=json.dumps({'file_name': file_name}))
@@ -83,23 +83,52 @@ class ManagementNode():
             'slave_nodes_with_needed_file']
 
         for slave in nodes_doing_the_job:
-            if self.status_track[str(slave)] not in ['map', 'shuffle', 'reduce'] :
+            if self.status_track[str(slave)] not in ['map_processing', 'shuffle_processing', 'reduce_processing'] :
                 response = requests.get('http://' + slave + '/map_launch',
-                                        json=jsonify({'file_name': file_name, 'map_py': mappy, 'job_name': job_name}))
-        ######### NOT FINISHED
+                                        json=json.dumps({'file_name': file_name, 'map_py': mappy, 'job_name': job_name}))
+                if response.status_code != 200:
+                    return False
 
         return True #every node finished the job successfully
 
+    def shuffle_launch(self, shuffle, job_name):
+        file_name = self.jobs_running[job_name][2]
+        slave_nodes_working_on_given_file = requests.get(
+            'http://' + self.management_node_address + '/get_nodes_with_file',
+            json=json.dumps({'file_name': file_name}))
+        self.jobs_running[job_name][0] = 'shuffle'  ###щоб уникнути shuffle----100, бо від датаноди
+        # відповідь з оновленим статусом чекати довше
 
-    def shuffle_launch(self, job_name):
-        self.jobs_running[job_name][0] = 'shuffle'
+        nodes_doing_the_job = slave_nodes_working_on_given_file.json()[
+            'slave_nodes_with_needed_file']
 
+        for slave in nodes_doing_the_job:
+            if self.status_track[str(slave)] == 'map_finished':
+                response = requests.get('http://' + slave + '/shuffle_launch',
+                                        json=json.dumps(
+                                            {'file_name': file_name, 'shuffle': shuffle, 'job_name': job_name}))
+                if response.status_code != 200:
+                    return False
 
         return True
 
-
-
     def reduce_launch(self, reduce_py, job_name):
+        file_name = self.jobs_running[job_name][2]
+        slave_nodes_working_on_given_file = requests.get(
+            'http://' + self.management_node_address + '/get_nodes_with_file',
+            json=json.dumps({'file_name': file_name}))
+        self.jobs_running[job_name][0] = 'reduce'
+        nodes_doing_the_job = slave_nodes_working_on_given_file.json()[
+            'slave_nodes_with_needed_file']
+
+        for slave in nodes_doing_the_job:
+            if self.status_track[str(slave)] == 'shuffle_finished':
+                response = requests.get('http://' + slave + '/reduce_launch',
+                                        json=json.dumps(
+                                            {'file_name': file_name, 'reduce_py': reduce_py, 'job_name': job_name}))
+                if response.status_code != 200:
+                    return False
+
         return True
 
     ### map_processing OR map_finished
@@ -114,7 +143,7 @@ class ManagementNode():
         print('nodes working' + str(nodes_doing_the_job))
         count_of_who_is_with_our_status = 0
 
-        time.sleep(3) ## TO LOOK INTO THIS -- PROBABLY NOT NEEDED
+        time.sleep(1) ## TO LOOK INTO THIS -- PROBABLY NOT NEEDED
 
         for slave in nodes_doing_the_job:
             if self.status_track[str(slave)] == specific_status:
